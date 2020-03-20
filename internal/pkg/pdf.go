@@ -10,7 +10,10 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-func GeneratePDF(url string, dest string) error {
+func GeneratePDF(url string, dest string, width float64, height float64) error {
+	paper_width := (width / 96.0) + 2.0
+	paper_height := (height / 96.0) + 2.0
+
 	// create context
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
@@ -21,12 +24,13 @@ func GeneratePDF(url string, dest string) error {
 		chromedp.WaitReady("svg"),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			buf, _, err := page.PrintToPDF().
-				WithPaperWidth(8.27).
-				WithPaperHeight(11.7).
+				WithPaperWidth(paper_width).
+				WithPaperHeight(paper_height).
 				WithMarginTop(1.0).
 				WithMarginBottom(1.0).
 				WithMarginLeft(1.0).
 				WithMarginRight(1.0).
+				WithPageRanges("1").
 				Do(ctx)
 			if err != nil {
 				return err

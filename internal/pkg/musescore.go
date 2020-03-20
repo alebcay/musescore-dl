@@ -4,6 +4,7 @@ import (
     "fmt"
     "net/http"
     "path"
+    "strconv"
     "strings"
 
     "github.com/briandowns/spinner"
@@ -18,7 +19,7 @@ func GetPages(id string, secret string, dir string, s *spinner.Spinner) (int, er
 
 	for {
 		current_url := fmt.Sprintf("https://musescore.com/static/musescore/scoredata/gen/%s/%s/%s/%s/%s/score_%d.svg", x, y, z, id, secret, current_page)
-		resp, err := http.Head(current_url)
+		resp, err := http.Get(current_url)
 		if err != nil {
 		    return current_page, err
 		}
@@ -26,8 +27,35 @@ func GetPages(id string, secret string, dir string, s *spinner.Spinner) (int, er
 		if resp.StatusCode != 200 {
 			break
 		} else {
+            // Read response data in to memory
+            document, err := goquery.NewDocumentFromReader(resp.Body)
+            if err != nil {
+                return current_page, err
+            }
+
+            var width float64
+            var height float64
+
+            document.Find("svg").Each(func(index int, element *goquery.Selection) {
+                width_element, exists := element.Attr("width")
+                if exists {
+                    width, err = strconv.ParseFloat(width_element, 64)
+                    if err != nil {
+                        panic(err)
+                    }
+                }
+
+                height_element, exists := element.Attr("height")
+                if exists {
+                    height, err = strconv.ParseFloat(height_element, 64)
+                    if err != nil {
+                        panic(err)
+                    }
+                }
+            })
+
             s.Suffix = fmt.Sprintf(" Downloading score (page %d)", current_page + 1)
-			err = GeneratePDF(current_url, fmt.Sprintf(path.Join(dir, "score_%d.pdf"), current_page))
+			err = GeneratePDF(current_url, fmt.Sprintf(path.Join(dir, "score_%d.pdf"), current_page), width, height)
 			if err != nil {
 				return current_page, err
 			}
