@@ -1,4 +1,4 @@
-package msdl
+package main
 
 import (
 	"errors"
@@ -7,40 +7,51 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"runtime"
 	"path"
+	"path/filepath"
+	"runtime"
 
-	"github.com/mholt/archiver/v3"
+	"github.com/shurcooL/vfsgen"
 )
 
-func WriteChromeShimScript(file string, exec_path string) error {
-	f, err := os.Create(file)
+func main() {
+	current_dir, err := os.Getwd()
 	if err != nil {
-		return err
+		panic(err)
 	}
-	defer f.Close()
 
-	_, err = f.WriteString(fmt.Sprintf("#!/bin/sh\n%s $@\n", exec_path))
+	assets_path := path.Join(current_dir, "build", "deps")
+	os.MkdirAll(assets_path, 0755)
+	err = GetChrome(assets_path)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	os.Chmod(file, 0777)
-	return err
+
+	generated_file_path, err := filepath.Abs(path.Join(current_dir, "internal", "pkg", "chrome.go"))
+	if err != nil {
+		panic(err)
+	}
+
+	fs := http.Dir(assets_path)
+
+	err = vfsgen.Generate(fs, vfsgen.Options{
+		Filename:     generated_file_path,
+		PackageName:  "msdl",
+	})
+	if err != nil {
+		panic(err)
+	}
 }
 
-func GetChrome(dir string) (string, error) {
+func GetChrome(dir string) error {
 	var platform string
 	var filename string
-	var final_path string
 
 	switch runtime.GOOS {
 	case "darwin":
-		final_path = path.Join(dir, "chrome-mac", "Chromium.app", "Contents", "MacOS", "Chromium")
 		platform = "Mac"
 		filename = "mac"
 	case "linux":
-		final_path = path.Join(dir, "chrome-linux", "chrome")
-
 		switch runtime.GOARCH {
 		case "amd64":
 			platform = "Linux_x64"
@@ -49,11 +60,9 @@ func GetChrome(dir string) (string, error) {
 			platform = "Linux"
 			filename = "linux"
 		default:
-			return "", errors.New(fmt.Sprintf("unsupported architecture %s", runtime.GOARCH))
+			return errors.New(fmt.Sprintf("unsupported architecture %s", runtime.GOARCH))
 		}
 	case "windows":
-		final_path = path.Join(dir, "chrome-win", "chrome.exe")
-
 		switch runtime.GOARCH {
 		case "amd64":
 			platform = "Win_x64"
@@ -62,16 +71,16 @@ func GetChrome(dir string) (string, error) {
 			platform = "Win"
 			filename = "win"
 		default:
-			return "", errors.New(fmt.Sprintf("unsupported architecture %s", runtime.GOARCH))
+			return errors.New(fmt.Sprintf("unsupported architecture %s", runtime.GOARCH))
 		}
 	default:
-		return "", errors.New(fmt.Sprintf("unsupported platform %s", runtime.GOOS))
+		return errors.New(fmt.Sprintf("unsupported platform %s", runtime.GOOS))
 	}
 
 	last_change_url := fmt.Sprintf("https://commondatastorage.googleapis.com/chromium-browser-snapshots/%s/LAST_CHANGE", platform)
 	resp, err := http.Get(last_change_url)
 	if err != nil {
-	    return "", err
+	    return err
 	}
 	defer resp.Body.Close()
 
@@ -79,11 +88,11 @@ func GetChrome(dir string) (string, error) {
 	if resp.StatusCode == http.StatusOK {
 	    bodyBytes, err := ioutil.ReadAll(resp.Body)
 	    if err != nil {
-	        return "", err
+	        return err
 	    }
 	    last_change_string = string(bodyBytes)
 	} else {
-		return "", errors.New("unable to determine latest chromium version")
+		return errors.New("unable to determine latest chromium version")
 	}
 
 	resp.Body.Close()
@@ -91,26 +100,24 @@ func GetChrome(dir string) (string, error) {
 	archive_url := fmt.Sprintf("https://commondatastorage.googleapis.com/chromium-browser-snapshots/%s/%s/chrome-%s.zip", platform, last_change_string, filename)
 	resp, err = http.Get(archive_url)
 	if err != nil {
-        return "", err
+        return err
     }
     defer resp.Body.Close()
 
     zip_path := path.Join(dir, "chrome.zip")
     out, err := os.Create(zip_path)
     if err != nil {
-        return "", err
+        return err
     }
     defer out.Close()
 
     // Write the body to file
     _, err = io.Copy(out, resp.Body)
     if err != nil {
-    	return "", err
+    	return err
     }
 
     out.Close()
 
-    err = archiver.Unarchive(zip_path, dir)
-
-    return final_path, err
+    return err
 }

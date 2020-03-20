@@ -1,0 +1,4 @@
+*.exe
+musescore-dl
+internal/pkg/chrome.go
+build/deps

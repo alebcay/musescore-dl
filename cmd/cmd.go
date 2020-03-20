@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
-	"runtime"
 	"time"
 
 	"github.com/alebcay/musescore-dl/internal/pkg"
@@ -20,7 +18,7 @@ var dest string
 
 var rootCmd = &cobra.Command{
 	Use:   "musescore-dl",
-	Short: "musescore-dl-to-PDF downloader",
+	Short: "musescore-to-PDF downloader",
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		url := args[0]
@@ -35,8 +33,7 @@ var rootCmd = &cobra.Command{
 		}
 		defer os.RemoveAll(tmp)
 
-		s.Suffix = " Downloading dependencies"
-		chrome, err := msdl.GetChrome(tmp)
+		err = msdl.SetupChrome(tmp)
 		if err != nil {
 			panic(err)
 		}
@@ -45,16 +42,6 @@ var rootCmd = &cobra.Command{
 		id, secret := msdl.GetScoreIDSecret(url)
 		if id == "" || secret == "" {
 			panic("bad score ID/secret")
-		}
-
-		if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
-			msdl.WriteChromeShimScript(path.Join(tmp, "google-chrome"), chrome)
-			os.Setenv("PATH", tmp + ":" + os.Getenv("PATH"))
-		} else if runtime.GOOS == "windows" {
-			dir, _ := path.Split(chrome)
-			os.Setenv("PATH", dir + ":" + os.Getenv("PATH"))
-		} else {
-			panic("unsupported platform")
 		}
 
 		pages, err := msdl.GetNumberOfPages(url)
