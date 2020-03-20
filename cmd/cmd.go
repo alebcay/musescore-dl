@@ -23,41 +23,47 @@ var rootCmd = &cobra.Command{
 	Short: "musescore-dl-to-PDF downloader",
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-  		url := args[0]
+		url := args[0]
 
-  		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-  		s.Start()
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
 
-  		s.Suffix = " Creating temporary directory"
-  		tmp, err := ioutil.TempDir("", "musescore-dl-")
-  		if err != nil {
-  			panic(err)
-  		}
-  		defer os.RemoveAll(tmp)
+		s.Suffix = " Creating temporary directory"
+		tmp, err := ioutil.TempDir("", "musescore-dl-")
+		if err != nil {
+			panic(err)
+		}
+		defer os.RemoveAll(tmp)
 
-  		s.Suffix = " Downloading dependencies"
-  		chrome, err := msdl.GetChrome(tmp)
-  		if err != nil {
-  			panic(err)
-  		}
+		s.Suffix = " Downloading dependencies"
+		chrome, err := msdl.GetChrome(tmp)
+		if err != nil {
+			panic(err)
+		}
 
-  		s.Suffix = " Getting score information"
-  		id, secret := msdl.GetScoreIDSecret(url)
-  		if id == "" || secret == "" {
-  			panic("Bad score ID/secret")
-  		}
+		s.Suffix = " Getting score information"
+		id, secret := msdl.GetScoreIDSecret(url)
+		if id == "" || secret == "" {
+			panic("bad score ID/secret")
+		}
+
+		if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+			msdl.WriteChromeShimScript(path.Join(tmp, "google-chrome"), chrome)
+			os.Setenv("PATH", tmp + ":" + os.Getenv("PATH"))
+		} else if runtime.GOOS == "windows" {
+			dir, _ := path.Split(chrome)
+			os.Setenv("PATH", dir + ":" + os.Getenv("PATH"))
+		} else {
+			panic("unsupported platform")
+		}
+
+		pages, err := msdl.GetNumberOfPages(url)
+		if id == "" || secret == "" {
+		panic("bad page count")
+		}
 
   		s.Suffix = " Downloading score"
-  		if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
-  			msdl.WriteChromeShimScript(path.Join(tmp, "google-chrome"), chrome)
-  			os.Setenv("PATH", tmp + ":" + os.Getenv("PATH"))
-  		} else if runtime.GOOS == "windows" {
-  			dir, _ := path.Split(chrome)
-  			os.Setenv("PATH", dir + ":" + os.Getenv("PATH"))
-  		} else {
-  			panic("unsupported platform")
-  		}
-  		pages, err := msdl.GetPages(id, secret, tmp, s)
+		err = msdl.GetPages(id, secret, tmp, s, pages)
   		if err != nil {
   			panic(err)
   		}
