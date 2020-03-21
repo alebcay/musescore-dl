@@ -3,7 +3,7 @@
 package main
 
 import (
-	"github.com/alebcay/musescore-dl/cmd"
+	"github.com/alebcay/musescore-dl/internal/cmd"
 )
 
 func main() {
