@@ -113,11 +113,6 @@ func GetChrome(dir string) error {
 
     // Write the body to file
     _, err = io.Copy(out, resp.Body)
-    if err != nil {
-    	return err
-    }
-
-    out.Close()
 
     return err
 }
