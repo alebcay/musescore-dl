@@ -48,7 +48,7 @@ func DownloadPDF(url string, dest string) {
 	s.Suffix = " Merging PDF files"
 	var pdfs []string
 	for i := 0; i < pages; i++ {
-	    pdfs = append(pdfs, fmt.Sprintf("%s/score_%d.pdf", tmp, i))
+		pdfs = append(pdfs, fmt.Sprintf("%s/score_%d.pdf", tmp, i))
 	}
 
 	if dest == "" {

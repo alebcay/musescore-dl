@@ -35,8 +35,8 @@ func main() {
 	fs := http.Dir(assets_path)
 
 	err = vfsgen.Generate(fs, vfsgen.Options{
-		Filename:     generated_file_path,
-		PackageName:  "msdl",
+		Filename:    generated_file_path,
+		PackageName: "msdl",
 	})
 	if err != nil {
 		panic(err)
@@ -80,17 +80,17 @@ func GetChrome(dir string) error {
 	last_change_url := fmt.Sprintf("https://commondatastorage.googleapis.com/chromium-browser-snapshots/%s/LAST_CHANGE", platform)
 	resp, err := http.Get(last_change_url)
 	if err != nil {
-	    return err
+		return err
 	}
 	defer resp.Body.Close()
 
 	var last_change_string string
 	if resp.StatusCode == http.StatusOK {
-	    bodyBytes, err := ioutil.ReadAll(resp.Body)
-	    if err != nil {
-	        return err
-	    }
-	    last_change_string = string(bodyBytes)
+		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		last_change_string = string(bodyBytes)
 	} else {
 		return errors.New("unable to determine latest chromium version")
 	}
@@ -100,19 +100,19 @@ func GetChrome(dir string) error {
 	archive_url := fmt.Sprintf("https://commondatastorage.googleapis.com/chromium-browser-snapshots/%s/%s/chrome-%s.zip", platform, last_change_string, filename)
 	resp, err = http.Get(archive_url)
 	if err != nil {
-        return err
-    }
-    defer resp.Body.Close()
+		return err
+	}
+	defer resp.Body.Close()
 
-    zip_path := path.Join(dir, "chrome.zip")
-    out, err := os.Create(zip_path)
-    if err != nil {
-        return err
-    }
-    defer out.Close()
+	zip_path := path.Join(dir, "chrome.zip")
+	out, err := os.Create(zip_path)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
 
-    // Write the body to file
-    _, err = io.Copy(out, resp.Body)
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
 
-    return err
+	return err
 }

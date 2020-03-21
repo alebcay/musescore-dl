@@ -13,7 +13,7 @@ var format string
 var rootCmd = &cobra.Command{
 	Use:   "musescore-dl",
 	Short: "musescore-to-PDF downloader",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		url := args[0]
 
