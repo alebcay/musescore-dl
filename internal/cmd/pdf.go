@@ -8,6 +8,7 @@ import (
 
 	"github.com/alebcay/musescore-dl/internal/pkg"
 	"github.com/briandowns/spinner"
+	"github.com/chromedp/chromedp"
 	pdf "github.com/pdfcpu/pdfcpu/pkg/api"
 )
 
@@ -33,6 +34,8 @@ func DownloadPDF(url string, dest string) {
 	if err != nil {
 		panic(err)
 	}
+
+	defer chromedp.Cancel(msdl.GetChromeContext())
 
 	pages, err := msdl.GetNumberOfPages(url)
 	if id == "" || secret == "" {

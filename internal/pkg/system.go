@@ -1,15 +1,21 @@
 package msdl
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path"
 	"runtime"
+	"sync"
 
+	"github.com/chromedp/chromedp"
 	"github.com/mholt/archiver/v3"
 )
+
+var ctx context.Context
+var once sync.Once
 
 func SetupChrome(dir string) error {
 	zipfile, err := assets.Open("chrome.zip")
@@ -63,4 +69,11 @@ func WriteChromeShimScript(file string, exec_path string) error {
 	}
 	os.Chmod(file, 0777)
 	return err
+}
+
+func GetChromeContext() context.Context {
+    once.Do(func() {
+        ctx, _ = chromedp.NewContext(context.Background())
+    })
+    return ctx
 }

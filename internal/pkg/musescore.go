@@ -1,7 +1,6 @@
 package msdl
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"path"
@@ -15,8 +14,7 @@ import (
 )
 
 func GetNumberOfPages(url string) (int, error) {
-	ctx, _ := chromedp.NewContext(context.Background())
-	defer chromedp.Cancel(ctx)
+	ctx = GetChromeContext()
 
 	var res string
 	err := chromedp.Run(ctx,
