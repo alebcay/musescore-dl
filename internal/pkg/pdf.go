@@ -15,8 +15,8 @@ func GeneratePDF(url string, dest string, width float64, height float64) error {
 	paper_height := (height / 96.0) + 2.0
 
 	// create context
-	ctx, cancel := chromedp.NewContext(context.Background())
-	defer cancel()
+	ctx, _ := chromedp.NewContext(context.Background())
+	defer chromedp.Cancel(ctx)
 
 	var pdfReader io.Reader
 	err := chromedp.Run(ctx, chromedp.Tasks{

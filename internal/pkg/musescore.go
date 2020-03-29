@@ -15,8 +15,8 @@ import (
 )
 
 func GetNumberOfPages(url string) (int, error) {
-	ctx, cancel := chromedp.NewContext(context.Background())
-	defer cancel()
+	ctx, _ := chromedp.NewContext(context.Background())
+	defer chromedp.Cancel(ctx)
 
 	var res string
 	err := chromedp.Run(ctx,
